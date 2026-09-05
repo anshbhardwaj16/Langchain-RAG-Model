@@ -1,0 +1,24 @@
+Retrieval Augmented Generation (RAG) Notes
+
+RAG combines two things: a retriever that finds relevant information from a
+knowledge base, and a generator (an LLM) that uses that information to produce
+an answer. This is useful because it lets a language model answer questions
+about information it was never trained on, and reduces hallucination because
+the model is grounded in retrieved facts.
+
+The typical RAG pipeline has these steps:
+1. Load documents (PDFs, websites, text files).
+2. Split documents into smaller chunks so they fit in the model's context window.
+3. Convert each chunk into a vector embedding using an embedding model.
+4. Store the embeddings in a vector database (like Chroma, FAISS, or Pinecone).
+5. When a user asks a question, embed the question and search the vector
+   database for the most similar chunks.
+6. Pass the retrieved chunks plus the question to the LLM to generate a
+   final answer.
+
+LangChain is a framework that provides pre-built components for each of these
+steps, so developers don't need to write retrieval and prompt-formatting code
+from scratch. LangGraph extends this by letting you build agents as explicit
+state machines (graphs), which is useful when you need loops, conditional
+branching, or multiple agents that hand off work to each other — something
+plain LangChain chains struggle with.
