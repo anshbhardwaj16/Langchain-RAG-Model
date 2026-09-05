@@ -1,0 +1,28 @@
+# === Zero-Cost RAG + Agent Stack ===
+
+# LangChain core + community integrations
+langchain==0.3.7
+langchain-community==0.3.7
+langchain-ollama==0.2.0
+langchain-chroma==0.1.4
+
+# LanGraph for agent orchestration (Phase 3)
+langgraph==0.2.45
+tavily-python==0.5.0
+
+# Vector store (local, free, persists to disk)
+chromadb==0.5.20
+
+# Embeddings (local, free - runs on CPU)
+sentence-transformers==3.2.1
+langchain-huggingface==0.1.2
+
+# Document loading
+pypdf==5.1.0
+beautifulsoup4==4.12.3
+requests==2.32.3
+unstructured==0.16.5
+
+# Utilities
+python-dotenv==1.0.1
+rich==13.9.4
