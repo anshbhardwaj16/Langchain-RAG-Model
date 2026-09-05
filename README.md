@@ -24,6 +24,41 @@ ollama pull llama3.1          # or mistral, phi3, etc.
 ollama serve                  # if not already running
 ```
 
+### Web UI backend
+
+The project includes a FastAPI backend for connecting the RAG agent to the
+existing web UI in the separate `Ollama-project` folder. Install the API
+packages with the project virtual environment:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install fastapi uvicorn
+```
+
+Index the documents before starting the backend:
+
+```powershell
+.\venv\Scripts\python.exe main.py index
+```
+
+Start the API from this project folder:
+
+```powershell
+.\venv\Scripts\python.exe -m uvicorn api:app --host 0.0.0.0 --port 8000
+```
+
+The web UI should use `http://localhost:8000` as its **RAG API endpoint**.
+Its `/api/chat` requests are handled by the Phase 2 agent, which searches the
+indexed documents first and can use Tavily web search when appropriate. Ollama
+must still be running because it provides the local language model.
+
+Available backend endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | Check API and index availability |
+| `GET /api/tags` | Compatibility endpoint used by the UI connection check |
+| `POST /api/chat` | Send a question to the RAG agent |
+
 If you use a different model than `llama3.1`, edit `config.py`:
 ```python
 OLLAMA_MODEL = "mistral"   # <- change this
@@ -107,6 +142,7 @@ by default, so you'll see exactly which tool it picks and why in the terminal.
 | `tools.py` | Phase 2: wraps document search + web search as agent-callable tools |
 | `agent.py` | Phase 2: builds the tool-calling agent that decides which tool to use |
 | `main.py` | CLI entry point (`index`, `chat`, and `agent` commands) |
+| `api.py` | FastAPI backend that exposes the Phase 2 agent to the web UI |
 
 ## Troubleshooting
 
