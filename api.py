@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import config
-import rag_chain
+import agent as agent_module
 import vectorstore
 
 
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 
 _vectorstore = None
+_agent = None
 
 
 def get_vectorstore():
@@ -33,6 +34,15 @@ def get_vectorstore():
     if _vectorstore is None:
         _vectorstore = vectorstore.load_vectorstore()
     return _vectorstore
+
+
+def get_agent():
+    global _agent
+    if _agent is None:
+        store = get_vectorstore()
+        if store is not None:
+            _agent = agent_module.build_agent(store)
+    return _agent
 
 
 @app.get("/health")
@@ -55,17 +65,15 @@ def chat(request: ChatRequest):
     if not question:
         raise HTTPException(status_code=400, detail="A user message is required")
 
-    store = get_vectorstore()
-    if store is None:
+    executor = get_agent()
+    if executor is None:
         raise HTTPException(status_code=503, detail="No index found. Run: python main.py index")
 
     try:
-        answer, sources = rag_chain.ask(store, question)
+        result = executor.invoke({"input": question})
+        answer = result["output"]
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-    if sources:
-        answer = f"{answer}\n\n**Sources:** {', '.join(sources)}"
 
     # The UI already understands Ollama's newline-delimited response format.
     import json
