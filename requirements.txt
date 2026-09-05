@@ -26,3 +26,7 @@ unstructured==0.16.5
 # Utilities
 python-dotenv==1.0.1
 rich==13.9.4
+
+# Local HTTP API for the existing web UI
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
