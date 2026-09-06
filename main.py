@@ -22,12 +22,14 @@ import loaders
 import vectorstore
 import rag_chain
 import agent as agent_module
+import research_graph
 
 console = Console()
 
 # --- Add any URLs you want scraped into the knowledge base ---
 WEBSITES = [
     "https://raw.githubusercontent.com/langchain-ai/langgraph/main/README.md",
+    "https://en.wikipedia.org/wiki/Meerut"
     # "https://example.com/some-article",
     # "https://en.wikipedia.org/wiki/Retrieval-augmented_generation",
 ]
@@ -164,9 +166,34 @@ def cmd_agent():
         console.print()
 
 
+def cmd_graph():
+    """Phase 3: chat with a developer-controlled LangGraph workflow."""
+    console.print("\n[bold cyan]LangGraph Phase 3 workflow[/bold cyan]")
+    console.print("[dim]Flow: START -> researcher -> analyst -> critic -> writer -> END[/dim]")
+    console.print("[dim](type 'exit' to quit)[/dim]\n")
+
+    while True:
+        question = console.input("[bold yellow]You:[/bold yellow] ")
+        if question.strip().lower() in ("exit", "quit", "q"):
+            break
+        if not question.strip():
+            continue
+
+        try:
+            result = research_graph.ask(question)
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print("[dim]Is Ollama running? Try: ollama serve[/dim]\n")
+            continue
+
+        console.print("\n[bold green]Assistant:[/bold green]")
+        console.print(Markdown(result["final_answer"]))
+        console.print()
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        console.print("[yellow]Usage: python main.py [index|chat|agent] [--rebuild][/yellow]")
+        console.print("[yellow]Usage: python main.py [index|chat|agent|graph] [--rebuild][/yellow]")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -176,6 +203,8 @@ if __name__ == "__main__":
         cmd_chat()
     elif command == "agent":
         cmd_agent()
+    elif command == "graph":
+        cmd_graph()
     else:
         console.print(f"[red]Unknown command: {command}[/red]")
-        console.print("[yellow]Usage: python main.py [index|chat|agent] [--rebuild][/yellow]")
+        console.print("[yellow]Usage: python main.py [index|chat|agent|graph] [--rebuild][/yellow]")

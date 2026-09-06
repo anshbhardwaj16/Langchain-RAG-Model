@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()  # reads a local .env file if present (e.g. TAVILY_API_KEY=...)
 
 # ---- LLM (Ollama) ----
-# Change this to whatever model you've pulled: `ollama pull llama3.1`
-# Other good free options: "mistral", "phi3", "qwen2.5:7b"
+# The Phase 2 agent requires Ollama tool-calling support. qwen2.5:3b is
+# lightweight and is already suitable for this project; override with
+# OLLAMA_MODEL in .env when using another tool-capable model.
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 

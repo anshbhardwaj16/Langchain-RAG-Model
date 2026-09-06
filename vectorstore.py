@@ -18,7 +18,8 @@ def get_embeddings():
     """Lazy-load the embedding model (downloads once, then cached locally)."""
     global _embeddings
     if _embeddings is None:
-        print(f"🔎 Loading embedding model: {config.EMBEDDING_MODEL} (first run downloads ~90MB)")
+        # Keep startup output ASCII-safe on Windows consoles using CP1252.
+        print(f"Loading embedding model: {config.EMBEDDING_MODEL} (first run downloads ~90MB)")
         _embeddings = HuggingFaceEmbeddings(model_name=config.EMBEDDING_MODEL)
     return _embeddings
 
@@ -32,7 +33,7 @@ def build_vectorstore(chunks: List[Document]) -> Chroma:
         collection_name=config.COLLECTION_NAME,
         persist_directory=config.VECTOR_DB_DIR,
     )
-    print(f"💾 Vector store saved to {config.VECTOR_DB_DIR} ({len(chunks)} chunks indexed)")
+    print(f"Vector store saved to {config.VECTOR_DB_DIR} ({len(chunks)} chunks indexed)")
     return vs
 
 
@@ -55,4 +56,4 @@ def load_vectorstore() -> Optional[Chroma]:
 def add_documents(vs: Chroma, chunks: List[Document]) -> None:
     """Add new chunks to an existing vector store (incremental indexing)."""
     vs.add_documents(chunks)
-    print(f"➕ Added {len(chunks)} new chunks to vector store")
+    print(f"Added {len(chunks)} new chunks to vector store")

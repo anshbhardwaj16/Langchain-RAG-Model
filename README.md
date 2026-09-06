@@ -20,7 +20,7 @@ source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3. Make sure Ollama is running with a model pulled
-ollama pull llama3.1          # or mistral, phi3, etc.
+ollama pull qwen2.5:3b       # tool-capable model used by the Phase 2 agent
 ollama serve                  # if not already running
 ```
 
@@ -47,9 +47,9 @@ Start the API from this project folder:
 ```
 
 The web UI should use `http://localhost:8000` as its **RAG API endpoint**.
-Its `/api/chat` requests are handled by the Phase 2 agent, which searches the
-indexed documents first and can use Tavily web search when appropriate. Ollama
-must still be running because it provides the local language model.
+Its `/api/chat` requests are handled by the Phase 3 LangGraph workflow, and the
+response includes graph reasoning for the UI to display. Ollama must still be
+running because it provides the local language model.
 
 Available backend endpoints:
 
@@ -59,9 +59,9 @@ Available backend endpoints:
 | `GET /api/tags` | Compatibility endpoint used by the UI connection check |
 | `POST /api/chat` | Send a question to the RAG agent |
 
-If you use a different model than `llama3.1`, edit `config.py`:
+If you use a different tool-capable model than `qwen2.5:3b`, edit `config.py`:
 ```python
-OLLAMA_MODEL = "mistral"   # <- change this
+OLLAMA_MODEL = "llama3.1"   # <- change this
 ```
 
 ### Web search setup (free — Tavily)
@@ -131,6 +131,32 @@ something in your documents and it'll use `search_documents`. Ask it about
 today's news and it'll reach for `web_search` instead. Run with `verbose=True`
 by default, so you'll see exactly which tool it picks and why in the terminal.
 
+### 5. Run the first LangGraph workflow (Phase 3 - graph controls)
+```bash
+python main.py graph
+```
+
+This is the first LangGraph version:
+
+```text
+START -> researcher -> analyst -> critic -> writer -> END
+```
+
+Each box is a LangGraph node. In this first version, each node calls the same
+local Ollama model, but each node has a different job. The important difference
+from the Phase 2 agent is that the LLM is not choosing the overall workflow.
+The graph is.
+
+Watch the terminal logs:
+
+- which node ran
+- what question entered the node
+- what state field the node produced
+
+Small experiment: open `research_graph.py`, swap the order of the `analyst`
+and `critic` edges, and see why graph structure matters. Then change it back
+before continuing.
+
 ## How It Works (Files)
 
 | File | Purpose |
@@ -141,7 +167,8 @@ by default, so you'll see exactly which tool it picks and why in the terminal.
 | `rag_chain.py` | Phase 1: fixed retrieval → prompt → LLM pipeline |
 | `tools.py` | Phase 2: wraps document search + web search as agent-callable tools |
 | `agent.py` | Phase 2: builds the tool-calling agent that decides which tool to use |
-| `main.py` | CLI entry point (`index`, `chat`, and `agent` commands) |
+| `research_graph.py` | Phase 3: first LangGraph workflow with explicit state, nodes, and edges |
+| `main.py` | CLI entry point (`index`, `chat`, `agent`, and `graph` commands) |
 | `api.py` | FastAPI backend that exposes the Phase 2 agent to the web UI |
 
 ## Troubleshooting
@@ -158,4 +185,4 @@ by default, so you'll see exactly which tool it picks and why in the terminal.
 
 Now that your agent can choose between two tools, we'll extend it with:
 - **Phase 3**: LangGraph multi-agent orchestration (Researcher → Analyzer → Summarizer, with explicit state and branching)
-- **Phase 4**: FastAPI deployment + hybrid search + reranking
+- **Phase 4**: FastAPI deployment + hybrid search + reranking.

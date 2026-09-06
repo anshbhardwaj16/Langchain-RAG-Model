@@ -413,6 +413,39 @@
   .tdot:nth-child(2){ animation-delay: .16s; } .tdot:nth-child(3){ animation-delay: .32s; }
   @keyframes tbounce { 0%,80%,100%{ transform: translateY(0); opacity:.35 } 40%{ transform: translateY(-4px); opacity:1 } }
 
+  .graph-reasoning {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .graph-reasoning summary {
+    cursor: pointer;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  .graph-reasoning[open] summary { border-bottom: 1px solid var(--border); }
+  .graph-step {
+    padding: 11px 12px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .graph-step:last-child { border-bottom: 0; }
+  .graph-step-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-text);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .graph-step-body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-2);
+  }
+
   /* ============ EMPTY / WELCOME ============ */
   #welcome {
     height: 100%;
@@ -858,7 +891,7 @@ function renderThread() {
     return;
   }
   thread.innerHTML = "";
-  chat.messages.forEach(m => thread.appendChild(turnEl(m.role, m.content)));
+  chat.messages.forEach(m => thread.appendChild(turnEl(m.role, m.content, m.graph)));
   scrollToBottom(false);
 }
 
@@ -895,7 +928,7 @@ function quick(text) {
   send();
 }
 
-function turnEl(role, content) {
+function turnEl(role, content, graph) {
   const turn = document.createElement("div");
   turn.className = "turn " + role;
   const isUser = role === "user";
@@ -907,9 +940,33 @@ function turnEl(role, content) {
   const body = document.createElement("div");
   body.className = "turn-body";
   if (isUser) body.textContent = content;
-  else body.innerHTML = renderMarkdown(content);
+  else body.innerHTML = renderMarkdown(content) + renderGraphReasoning(graph);
   turn.appendChild(head); turn.appendChild(body);
   return turn;
+}
+
+function renderGraphReasoning(graph) {
+  if (!graph) return "";
+  const steps = [
+    ["Workflow", graph.workflow],
+    ["Research", graph.research],
+    ["Analysis", graph.analysis],
+    ["Critique", graph.critique]
+  ].filter(([label, value]) => value && String(value).trim());
+
+  if (!steps.length) return "";
+
+  return (
+    '<details class="graph-reasoning" open>' +
+      '<summary>Graph reasoning</summary>' +
+      steps.map(([label, value]) =>
+        '<div class="graph-step">' +
+          '<div class="graph-step-title">' + escapeHtml(label) + '</div>' +
+          '<div class="graph-step-body">' + renderMarkdown(String(value)) + '</div>' +
+        '</div>'
+      ).join("") +
+    '</details>'
+  );
 }
 
 /* ---------- Markdown (offline-first, lightweight) ---------- */
@@ -1081,6 +1138,7 @@ async function send() {
   };
 
   let acc = "";
+  let graphReasoning = null;
   let firstToken = true;
 
   try {
@@ -1118,18 +1176,19 @@ async function send() {
           acc += obj.message.content;
           if (!pending) { pending = true; requestAnimationFrame(paint); }
         }
+        if (obj.graph) graphReasoning = obj.graph;
         if (obj.done) { /* finished */ }
       }
     }
 
-    aiBody.innerHTML = renderMarkdown(acc || "*(no output)*");
-    chat.messages.push({ role: "assistant", content: acc });
+    aiBody.innerHTML = renderMarkdown(acc || "*(no output)*") + renderGraphReasoning(graphReasoning);
+    chat.messages.push({ role: "assistant", content: acc, graph: graphReasoning });
     persist();
 
   } catch (e) {
     if (e.name === "AbortError") {
-      aiBody.innerHTML = renderMarkdown(acc) + '<p style="color:var(--text-3);font-style:italic">— stopped</p>';
-      if (acc) chat.messages.push({ role: "assistant", content: acc });
+      aiBody.innerHTML = renderMarkdown(acc) + renderGraphReasoning(graphReasoning) + '<p style="color:var(--text-3);font-style:italic">— stopped</p>';
+      if (acc) chat.messages.push({ role: "assistant", content: acc, graph: graphReasoning });
       persist();
     } else {
       aiBody.innerHTML =
