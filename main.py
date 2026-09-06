@@ -172,6 +172,10 @@ def cmd_graph():
     console.print("[dim]Flow: START -> researcher -> analyst -> critic -> writer -> END[/dim]")
     console.print("[dim](type 'exit' to quit)[/dim]\n")
 
+    # Load the model now so the first question does not pay for it.
+    with console.status("[dim]Warming up the model...[/dim]"):
+        research_graph.warm_up()
+
     while True:
         question = console.input("[bold yellow]You:[/bold yellow] ")
         if question.strip().lower() in ("exit", "quit", "q"):
